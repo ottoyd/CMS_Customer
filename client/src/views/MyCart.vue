@@ -20,6 +20,7 @@
           <th>Item Price</th>
           <th>Sub Total</th>
           <th>Quantity</th>
+          <th>Kurir</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -32,15 +33,33 @@
             <button class="btn-audit" @click="demand(item, 'up')">+</button>
             {{item.demand}}
             <button class="btn-audit" v-if="item.demand > 0" @click="demand(item, 'down')">-</button>
+            <button class="btn-audit" v-else>-</button>
+          </td>
+          <td v-if="item.demand > 0">
+            <b-form-select class="select" @change="selectCour(item, $event)">
+              <b-form-select-option v-if="item.cour == 2" value="2" selected>2 Hari Rp 30000</b-form-select-option>
+              <b-form-select-option v-else value="2">2 Hari Rp 30000</b-form-select-option>
+              <b-form-select-option v-if="item.cour == 3" value="3" selected>3 Hari Rp 20000</b-form-select-option>
+              <b-form-select-option v-else value="3">3 Hari Rp 20000</b-form-select-option>
+            </b-form-select>
+          </td>
+          <td v-else>
+            <b-form-select class="select">
+              <b-form-select-option v-if="item.cour == 2" value="2" disabled>2 Hari Rp 30000</b-form-select-option>
+              <b-form-select-option v-else disabled value="2">2 Hari Rp 30000</b-form-select-option>
+              <b-form-select-option v-if="item.cour == 3" value="3" disabled>3 Hari Rp 20000</b-form-select-option>
+              <b-form-select-option v-else disabled value="2">3 Hari Rp 20000</b-form-select-option>
+            </b-form-select>
           </td>
           <td>
-            <button class="btn-audit" @click="dropItem(item), makeToast('danger', item.Product.name, ' Removed')">Remove</button>
+            <button class="btn-audit" @click="dropItem(item), makeToast('danger'  , item.Product.name, ' Removed')">Remove</button>
             <button class="btn-audit" v-if="item.select === false" @click="selected(item), makeToast('info', item.Product.name, ' Check')">Check</button>
             <button class="btn-audit" v-if="item.select === true" variant="Uncheck" @click="selected(item), makeToast('danger', item.Product.name, ' Uncheck')">Uncheck</button>
           </td>
         </tr>
       </tbody>
     </table>
+    <h1>{{courier}}</h1>
   </div>
 </template>
 
@@ -50,7 +69,8 @@ export default {
   data () {
     return {
       isLoading: false,
-      check: true
+      check: true,
+      courier: ''
     }
   },
   created () {
@@ -78,6 +98,25 @@ export default {
     }
   },
   methods: {
+    selectCour (item, event) {
+      return axios({
+        method: 'PUT',
+        url: 'https://hidden-beyond-51968.herokuapp.com/product/cart/cour',
+        headers: {
+          access_token: localStorage.getItem('access_token')
+        },
+        data: {
+          duration: event,
+          item
+        }
+      })
+        .then((rese) => {
+          this.$store.dispatch('getCart')
+        }).catch((err) => {
+          console.log(err)
+          this.$store.dispatch('getCart')
+        })
+    },
     makeToast (variant, msg, status) {
       if (status) {
         this.$bvToast.toast(
@@ -104,8 +143,6 @@ export default {
         }
       })
         .then((rese) => {
-          console.log(rese)
-          console.log('horeeeeeeee')
           this.makeToast('info', 'thank you come again !!')
           this.$store.dispatch('getBal')
           this.$store.dispatch('getCart')
@@ -137,7 +174,7 @@ export default {
     dropItem (item) {
       return axios({
         method: 'DELETE',
-        url: 'https://hidden-beyond-51968.herokuapp.com/product//cart/delete',
+        url: 'https://hidden-beyond-51968.herokuapp.com/product/cart/delete',
         data: {
           idCart: item.idCart
         },
@@ -157,6 +194,7 @@ export default {
         method: 'PUT',
         url: 'https://hidden-beyond-51968.herokuapp.com/product/cart/update',
         data: {
+          item,
           idCart: item.idCart,
           ProductId: item.ProductId,
           demand: item.demand,
@@ -167,6 +205,7 @@ export default {
         }
       })
         .then((result) => {
+          console.log('result')
           this.$store.dispatch('getCart')
         }).catch((err) => {
           console.log(err)
@@ -177,8 +216,14 @@ export default {
 </script>
 
 <style scoped>
+.select {
+  width: 200px;
+}
+table {
+  border: rgb(224, 96, 96) solid 2px;
+}
 .btn-audit {
-  margin: 0px 40px;
+  margin: 0px 10px;
 }
 td {
   text-align: center;

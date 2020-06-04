@@ -46,37 +46,22 @@ export default {
       this.$store.dispatch('getProduct', tags)
     },
     addToCart (product) {
-      console.log(product.name)
-      const temp = this.$store.state.carts
-      const check = function (id) {
-        for (const i in temp) {
-          if (temp[i].ProductId === id) {
-            return false
-          }
+      axios({
+        method: 'POST',
+        url: 'https://hidden-beyond-51968.herokuapp.com/product/cart',
+        data: {
+          id: product.id
+        },
+        headers: {
+          access_token: localStorage.getItem('access_token')
         }
-        return true
-      }
-      if (check(product.id)) {
-        this.makeToast('success', product.name)
-        axios({
-          method: 'POST',
-          url: 'https://hidden-beyond-51968.herokuapp.com/product/cart',
-          data: {
-            id: product.id
-          },
-          headers: {
-            access_token: localStorage.getItem('access_token')
-          }
+      })
+        .then((result) => {
+          this.makeToast('success', product.name)
+          this.$store.dispatch('getCart')
+        }).catch((err) => {
+          this.makeToast('danger', err.response.data.name)
         })
-          .then((result) => {
-            // console.log(result)
-            this.$store.dispatch('getCart')
-          }).catch((err) => {
-            console.log(err)
-          })
-      } else {
-        this.makeToast('warning', `${product.name} already`)
-      }
     }
   }
 }
